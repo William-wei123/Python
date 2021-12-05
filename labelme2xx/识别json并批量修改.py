@@ -32,13 +32,16 @@ def rest_rect(file_old, file_new):
                 print(img_file_name)
                 print(id)
                 # img_file_name = '0'+str(300-1+id)
-                data['images'][i]['file_name'] = '0'+str(300-1+id)
+                data['images'][i]['file_name'] = '0'+str(300-1+id)+'.png'
                 print(data['images'][i]['file_name'])
                 print(type(data['images'][i]['file_name']))
             # data[0]['resType'] = 'rect'
             # newpath = os.path.join(file_new, os.path.split(f11)[1])
             # with open(newpath, 'w') as f2:
             #     json.dump(data, f2)  # 写入f2文件到本地
+            with open(file_new, 'w') as f2:
+                json.dump(data, f2)  # 写入f2文件到本地
+
 
 
 
