@@ -50,9 +50,12 @@ for i in range(imgIds.__len__()):
     print(anns)
     coco.showAnns(anns)
     plt.imshow(I);
-    plt.axis('off');
+    plt.title(img['file_name'])
+    plt.xlabel(imgIds[i])
+    plt.ylabel(imgIds[i])
+    plt.axis('on');
 
-    plt.pause(0.5)  # 显示秒数
+    plt.pause(2)  # 显示秒数
     plt.close()
 # I = io.imread('%s/%s/%s' % (dataDir,dataType,img['file_name']))
 # #plt.axis('off')
@@ -61,17 +64,17 @@ for i in range(imgIds.__len__()):
 
 
 #加载肢体关键点：
-catIds=[]
-for ann in coco.dataset['annotations']:
-    if ann['image_id']==imgIds[0]:
-        catIds.append(ann['category_id'])
-plt.imshow(I);
-plt.axis('off')
-annIds = coco.getAnnIds(imgIds=img['id'], catIds=catIds, iscrowd=None)
-anns = coco.loadAnns(annIds)
-print(anns)
-coco.showAnns(anns)
-plt.imshow(I); plt.axis('off');
+# catIds=[]
+# for ann in coco.dataset['annotations']:
+#     if ann['image_id']==imgIds[0]:
+#         catIds.append(ann['category_id'])
+# plt.imshow(I);
+# plt.axis('off')
+# annIds = coco.getAnnIds(imgIds=img['id'], catIds=catIds, iscrowd=None)
+# anns = coco.loadAnns(annIds)
+# print(anns)
+# coco.showAnns(anns)
+# plt.imshow(I); plt.axis('off');
 # plt.show()
 
 #加载instances mask：
