@@ -26,15 +26,21 @@ def rest_rect(file_old, file_new):
         with open(filename, 'r+') as f:
             data = json.load(f)
             print(data['images'].__len__())
-            for i in range(data['images'].__len__()):
-                id = data['images'][i]['id']
-                img_file_name = data['images'][i]['file_name']
-                print(img_file_name)
-                print(id)
-                # img_file_name = '0'+str(300-1+id)
-                data['images'][i]['file_name'] = '0'+str(300-1+id)+'.png'
-                print(data['images'][i]['file_name'])
-                print(type(data['images'][i]['file_name']))
+            data['categories']['supercategory'] = 'none'
+            data['categories']['id'] = 4
+            data['categories']['name'] = 'boat'
+            for i in range(data['annotations'].__len__()):
+                data['annotations']['category_id'] = 4
+
+
+                # id = data['images'][i]['id']
+                # img_file_name = data['images'][i]['file_name']
+                # print(img_file_name)
+                # print(id)
+                # # img_file_name = '0'+str(300-1+id)
+                # data['images'][i]['file_name'] = '0'+str(300-1+id)+'.jpg'
+                # print(data['images'][i]['file_name'])
+                # print(type(data['images'][i]['file_name']))
             # data[0]['resType'] = 'rect'
             # newpath = os.path.join(file_new, os.path.split(f11)[1])
             # with open(newpath, 'w') as f2:
@@ -46,4 +52,4 @@ def rest_rect(file_old, file_new):
 
 
 # 函数调用
-rest_rect('test.json', 'test1.json')
+rest_rect('test.json', '../test1.json')
