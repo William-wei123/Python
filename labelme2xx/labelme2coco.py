@@ -71,7 +71,7 @@ class labelme2coco(object):
         image['width'] = width
         image['id'] = num + 1
         # image['file_name'] = data['imagePath'].split('/')[-1]
-        image['file_name'] = data['imagePath'][3:14]
+        image['file_name'] = data['imagePath']		#[3:14]
         self.height = height
         self.width = width
 
@@ -158,6 +158,6 @@ class labelme2coco(object):
         json.dump(self.data_coco, open(self.save_json_path, 'w'), indent=4, cls=MyEncoder)  # indent=4 更加美观显示
 
 
-labelme_json = glob.glob('./ship_segmentation/*.json')
+labelme_json = glob.glob('./20211208（self）（原图片大小）/val_data/*.json')
 # labelme_json=['./Annotations/*.json']
-labelme2coco(labelme_json, './ship_segmentation/test.json')
+labelme2coco(labelme_json, './20211208（self）（原图片大小）/val_data/ship_val.json')
