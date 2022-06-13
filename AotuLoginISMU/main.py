@@ -22,8 +22,8 @@ def Login():#1 成功   0 失败
     url = 'https://hwifi.shmtu.edu.cn:19008/portalpage/cc15f524-83a4-4234-8585-60419a2fa308/20201112140517/pc/auth.html?apmac=6c16320d27aa&uaddress=10.66.132.25&umac=08beac2ace50&authType=1&lang=zh_CN&ssid=aVNNVQ==&pushPageId=37efd806-5224-4e7b-a186-43538139e997'
     url_second = 'https://hwifi.shmtu.edu.cn:19008/portalpage/cc15f524-83a4-4234-8585-60419a2fa308/20201112140517/pc/auth.html' #无法点击登录
 
-    name = '20213051xxxx'       #学号
-    password = 'xxxxxxxxx' #密码
+    name = '202130510061'       #学号
+    password = 'Cwpzxcvbnm.123' #密码
     drive.get(url)
     drive.implicitly_wait(20)#隐性等待， 最长等待20秒
     drive.find_element_by_id('username').send_keys(name)
@@ -43,17 +43,32 @@ def Login():#1 成功   0 失败
         return 0
 
 
+def text_create(name, msg):
+    desktop_path = "/home/xinqiang_329/桌面/cwp/autoSMU/"  # 新创建的txt文件的存放路径
+    full_path = desktop_path + name + '.txt'  # 也可以创建一个.doc的word文档
+    file = open(full_path, 'w')
+    file.write(msg)  # msg也就是下面的Hello world!
+    file.close()
+
+
+    # 调用函数创建一个名为mytxtfile的.txt文件，并向其写入Hello world!
+
 if __name__ == '__main__':
     print('开始')
     res = test_net()
     if res :
         print('网络不通，开始尝试登陆')
         flag = Login()
+
         if flag == 0:
             print('怎么办?，试着去选择wifi连接？')
+        else:
+            text_create('Truesuccessfile', 'success!')
     else:
         print('已连接')
         flag = Login()
         if flag == 0:
             print('怎么办')
+        else:
+            text_create('successfile', 'success2success!')
 
