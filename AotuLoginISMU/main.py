@@ -22,8 +22,8 @@ def Login():#1 成功   0 失败
     url = 'https://hwifi.shmtu.edu.cn:19008/portalpage/cc15f524-83a4-4234-8585-60419a2fa308/20201112140517/pc/auth.html?apmac=6c16320d27aa&uaddress=10.66.132.25&umac=08beac2ace50&authType=1&lang=zh_CN&ssid=aVNNVQ==&pushPageId=37efd806-5224-4e7b-a186-43538139e997'
     url_second = 'https://hwifi.shmtu.edu.cn:19008/portalpage/cc15f524-83a4-4234-8585-60419a2fa308/20201112140517/pc/auth.html' #无法点击登录
 
-    name = '202130510061'       #学号
-    password = 'Cwpzxcvbnm.123' #密码
+    name = '202xxxxxx'       #学号
+    password = 'Cwp' #密码
     drive.get(url)
     drive.implicitly_wait(20)#隐性等待， 最长等待20秒
     drive.find_element_by_id('username').send_keys(name)
