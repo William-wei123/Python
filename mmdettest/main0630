@@ -1,0 +1,250 @@
+##自己用来测试的主函数
+from mmdet.apis import init_detector, inference_detector,show_result_pyplot
+import os
+from track.sort import *
+from PIL import Image
+import cv2  #用CV2显示并保存为视频
+import torch
+import os
+# import matplotlib.pyplot as plt
+# #######################
+# 使用什么跟踪算法 sort_flag
+# 0:自己瞎写 REID + Bytetrack
+# 1:sort
+# 2：deepsort
+# 3:Bytetrack
+# 4:tracktor?
+# 5:QDtrack?
+sort_flag = 2
+track_modle = ''
+# #######################
+# 用于保存视频 save_mp4
+# 0:no保存
+# 1:保存
+save_mp4 = 0
+
+# #######################
+# 用于选择模型  what_model
+# 0:yolox
+# 1:FasterRCNN
+# 2:FOC
+what_model = 'FasterRCNN'
+if what_model is 'yolox':   #yolox
+    config_file = 'configs/yolox/yolox_x_8x8_300e_coco.py'
+    checkpoint_file = 'checkpoints/yolox_x_8x8_300e_coco_20211126_140254-1ef88d67.pth'
+elif what_model is 'FasterRCNN':   #FasterRCNN
+    config_file = 'configs/faster_rcnn/faster_rcnn_r50_fpn_1x_coco.py'
+    checkpoint_file = 'checkpoints/faster_rcnn_r50_fpn_1x_coco_20200130-047c8118.pth'
+elif what_model is 'FOC':  # Foc
+    config_file = 'configs/fcos/fcos_r50_caffe_fpn_gn-head_1x_coco.py'
+    checkpoint_file = 'checkpoints/fcos_r50_caffe_fpn_gn-head_1x_coco-821213aa.pth'
+# faster_rcnn/faster_rcnn_r50_fpn_1x_coco.py
+# configs/fcos/fcos_r50_caffe_fpn_gn-head_1x_coco.py
+# configs/yolox/yolox_x_8x8_300e_coco.py
+
+# download the checkpoint from model zoo and put it in `checkpoints/`
+# url: https://download.openmmlab.com/mmdetection/v2.0/faster_rcnn/faster_rcnn_r50_fpn_1x_coco/faster_rcnn_r50_fpn_1x_coco_20200130-047c8118.pth
+
+# faster_rcnn_r50_fpn_1x_coco_20200130-047c8118.pth
+# fcos_r50_caffe_fpn_gn-head_1x_coco-821213aa.pth
+# yolox_x_8x8_300e_coco_20211126_140254-1ef88d67.pth
+# yolox_s_8x8_300e_coco_20211121_095711-4592a793.pth
+
+# #######################
+# 用于选择视频  what_data
+# 0:MVI_1612_VIS
+# 1:MVI_1624_VIS
+# 2:MVI_1627_VIS
+# 3:IMG_5235
+# 4:IMG_5317
+# 5:IMG_4567
+# 6:MVI_1622_VIS
+# 7:ship
+# 8ship_small
+# 9:0605_weiba
+
+what_data = '0605_weiba'
+
+dir_temp = '/home/xinqiang_329/桌面/cwp/snake/demo_images/MyData/%s/'%what_data # /home/xinqiang_329/桌面/cwp/snake/demo_images/MyData/MVI_1624_VIS/'
+# dir_temp = '0605_weiba/'
+if sort_flag == 1:
+    from track.sort import *
+
+    track_modle = 'Sort'
+    mot_tracker = Sort()
+elif sort_flag ==2:
+    from track.deepsort.deep_sort import DeepSort
+
+    track_modle = 'DeepSort'
+    temp_cfg = {}
+    temp_cfg['REID_CKPT'] = "/home/xinqiang_329/桌面/cwp/mmdetection/mmlab_test/track/deepsort/deep/checkpoint/ckpt_ship1.t7"
+    temp_cfg['MAX_DIST'] =  0.2     # 0.2  最大余弦距离
+    temp_cfg['MIN_CONFIDENCE'] = 0.3    #0.3  YOLOv5最小检测置信度，增大置信度可去除杂散干扰。
+    temp_cfg['NMS_MAX_OVERLAP'] = 0.5   # 0.5
+    temp_cfg['MAX_IOU_DISTANCE'] = 0.8  # 0.7 IOU最大距离，此值小则不易匹配，将产生新的ID。
+    temp_cfg['MAX_AGE'] = 70            # 70
+    temp_cfg['N_INIT'] = 5              # 3 track连续confirm数量，增大有助于减少新ID出现。
+    temp_cfg['NN_BUDGET'] = 100         # track最大feature数量
+
+    mot_tracker = DeepSort(temp_cfg['REID_CKPT'],
+                max_dist=temp_cfg['MAX_DIST'], min_confidence=temp_cfg['MIN_CONFIDENCE'],
+                nms_max_overlap=temp_cfg['NMS_MAX_OVERLAP'], max_iou_distance=temp_cfg['MAX_IOU_DISTANCE'],
+                max_age=temp_cfg['MAX_AGE'], n_init=temp_cfg['N_INIT'], nn_budget=temp_cfg['NN_BUDGET'], use_cuda=True)
+elif sort_flag==3:
+    from track.bytetrack.tracker.byte_tracker import BYTETracker
+
+    track_modle = 'ByteTrack'
+    parser = argparse.ArgumentParser("ByteTrack Demo!")
+    parser.add_argument("--track_thresh", type=float, default=0.001, help="tracking confidencethreshold")
+    parser.add_argument("--track_buffer", type=int, default=30, help="the frames for keep lost tracks")
+    parser.add_argument("--match_thresh", type=float, default=0.8, help="matching threshold for tracking")
+    parser.add_argument('--min-box-area', type=float, default=10, help='filter out tiny boxes')
+    parser.add_argument("--mot20", dest="mot20", default=False, action="store_true", help="test mot20.")
+    arg = parser.parse_args()
+    mot_tracker = BYTETracker(arg, frame_rate=5)
+    print('*'*9+'use Bytetrack'+'*'*9)
+    # ######################
+
+
+
+# ######################
+
+ct_score = 0.1
+def SET_COMPOSITOR(FILE_NAME):  #sort's key图像排序
+    NUM = FILE_NAME.split("_")[-1]
+    NUM = NUM.split(".")[0]
+    return int(NUM)
+
+def save_track_txt(txt_path, frame_idx, outputs):
+    if  len(outputs) != 0:
+        for j, output in enumerate(outputs):
+            bbox_left = output[0]
+            bbox_top = output[1]
+            bbox_w = output[2] - output[0]
+            bbox_h = output[3] - output[1]
+            identity = output[-1]
+            with open(txt_path, 'a') as f:
+                # f.write(('%g ' * 10 + '\n') % (frame_idx, identity, bbox_left,
+                #                                bbox_top, bbox_w, bbox_h, -1, -1, -1, -1))  # label format
+                f.write("{},{},{},{},{},{},{},{},{},{}\n".format(frame_idx, identity, bbox_left,
+                                                                 bbox_top, bbox_w, bbox_h, -1, -1, -1, -1))
+
+
+def draw_result(img,reslut):#for all
+    print(img)
+    # image = Image.open(img)
+    image = cv2.imread(img)
+
+    # figture = plt.figure(figsize=(16,9),dpi=120)
+    # figture.imshow(image)
+    # figture.axis('off')
+    # # figture.title('result')
+    # figture.imread
+    for detection in reslut:
+        x_min, y_min, x_max, y_max = detection[:4].astype(int)
+        # figture.plot([x_min, x_min, x_max, x_max, x_min], [y_min, y_max, y_max, y_min, y_min], color='w', linewidth=0.5)
+        Id = detection[4]
+        # figture.text((x_min+x_max)/2,(y_min+y_max)/2, str(Id))
+        # print(detection)
+        cv2.rectangle(image, (x_min, y_min), (x_max, y_max), (0, 0, 255), 2)
+        cv2.putText(image, str(Id), (x_min, y_min),cv2.FONT_HERSHEY_SIMPLEX,1, (0, 0, 255))
+        # if save_mp4 == 1:
+
+    # figture.show()
+    return image
+# for deepsort
+def xyxy2xywh(x):
+    # Convert nx4 boxes from [x1, y1, x2, y2] to [x, y, w, h] where xy1=top-left, xy2=bottom-right
+    y = torch.zeros_like(x) if isinstance(x, torch.Tensor) else np.zeros_like(x)
+    y[:, 0] = (x[:, 0] + x[:, 2]) / 2  # x center
+    y[:, 1] = (x[:, 1] + x[:, 3]) / 2  # y center
+    y[:, 2] = x[:, 2] - x[:, 0]  # width
+    y[:, 3] = x[:, 3] - x[:, 1]  # height
+    return y
+
+# for ByteTrack
+def _tlwh_to_xyxy( bbox_tlwh, width, height):
+    """
+    TODO:
+        Convert bbox from xtl_ytl_w_h to xc_yc_w_h
+    Thanks JieChen91@github.com for reporting this bug!
+    """
+    x,y,w,h = bbox_tlwh
+    x1 = max(int(x),0)
+    x2 = min(int(x+w), width-1)
+    y1 = max(int(y),0)
+    y2 = min(int(y+h), height-1)
+    return [x1,y1,x2,y2]
+
+
+
+device = 'cuda:0'
+# init a detector
+model = init_detector(config_file, checkpoint_file, device=device)
+print(type(model))
+# iference the demo image
+temp_img_list = os.listdir(dir_temp)
+temp_img_list.sort(key=SET_COMPOSITOR)
+if save_mp4 == 1:
+    fps = 4
+    fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    video_dir = 'output/%s_yolo_deepsort_new.MP4'%os.path.split(os.path.split(dir_temp)[0])[1]#因为最后有/，所以多来一次
+    videoWriter = cv2.VideoWriter(video_dir, fourcc, fps, (1920, 1080))#输出路径和文件名，输出格式？，帧率，图片大小（不放心可以读一张，根据图片自动设置）
+for frame_idx, img in enumerate(temp_img_list):
+    img_name_temp = img.split('.')[0]
+    img = dir_temp+img
+    # img = '/home/xinqiang_329/桌面/cwp/snake/demo_images/MyData/MVI_1624_VIS'#'demo/derain_ret.png'   #MVI_1624_VIS_1.png
+    result = inference_detector(model, img) #不经过训练，他默认的是分为80类，船好像在第8位（从0开始）
+
+    ship_result = result[0] #person 0类  boat 类在第8呢,而且里面包括分数很低的结果，需要过滤
+    csv_save_dir = './output/%s/%s'%(what_model, what_data)
+    if not os.path.isdir(csv_save_dir):
+        os.makedirs(csv_save_dir)#检查目录是否存在，不存在则创建
+    np.savetxt('%s/%s.csv'%(csv_save_dir, img_name_temp), ship_result, fmt='%.5e',delimiter=',')
+    # continue
+    if sort_flag==1:    #sort
+        temp_ind = ship_result[:, 4] > ct_score
+        # print(temp_ind)
+        ship_result = ship_result[temp_ind, :]
+        last_result = mot_tracker.update(ship_result)
+    elif sort_flag==2:  #deepsort
+        bbox_xywh = xyxy2xywh(ship_result[:, :4])
+        confs = ship_result[:, 4:5]
+        img0 = cv2.imread(img)
+
+        last_result = mot_tracker.update(bbox_xywh, confs, img0)#图片中心坐标+宽高，置信度，BGR格式图片
+    elif sort_flag == 3:    #bytetrack
+
+        img0 = cv2.imread(img)
+        print(img0.shape)
+        online_targets = mot_tracker.update(ship_result, img0.shape, img0.shape, img0)  # 左上角右下角+置信度，[img_info['height'], img_info['width']]，图片大小		两个图片大小好像是为了能恢复原图大小，可能原始代码会缩放
+        #返回的Strack类型需要特殊处理一下
+        last_result = []
+        for t in online_targets:
+            temp = []
+            tlwh = t.tlwh
+            tid = t.track_id
+            vertical = tlwh[2] / tlwh[3] > 1.6
+            # if tlwh[2] * tlwh[3] > arg.min_box_area and not vertical:#暂时不懂这一部是为了什么，所以取消掉
+            temp = _tlwh_to_xyxy(tlwh, img0.shape[1], img0.shape[0])
+            temp.append(tid)
+            # online_tlwhs.append(tlwh)
+            # online_ids.append(tid)
+            # online_scores.append(t.score)
+            last_result.append(temp)
+        last_result = np.array(last_result)
+
+    txt_path = 'output/%s_%s_%s.txt'%(what_data,what_model,track_modle)
+    save_track_txt(txt_path, frame_idx, last_result)
+    image_result = draw_result(img, last_result)
+    if save_mp4==1:
+        videoWriter.write(image_result)
+    else:
+        cv2.imshow('result',image_result)
+        cv2.waitKey(5)
+
+if save_mp4 == 1:
+    videoWriter.release()
+
+cv2.destroyAllWindows()
+
