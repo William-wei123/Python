@@ -1,4 +1,4 @@
-'
+`
 from matplotlib.font_manager import FontProperties
 from matplotlib import rcParams
 from matplotlib import pyplot
@@ -45,4 +45,4 @@ pyplot.tick_params(axis='both', direction='in')
 
 # pyplot.show()
 pyplot.savefig(os.path.dirname(path)+f'/test{min_index}.png', dpi=300, bbox_inches='tight')
-'
+`
