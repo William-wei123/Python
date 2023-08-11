@@ -1,3 +1,4 @@
+## 为了满足中文期刊的一些格式，调整matplotlib中英文字体和一些参数
 ```
 from matplotlib.font_manager import FontProperties
 from matplotlib import rcParams
